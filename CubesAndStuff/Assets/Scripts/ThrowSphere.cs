@@ -1,109 +1,138 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class ThrowSphere : MonoBehaviour {
-	public float throwingPower = 5f;
-	
-	private bool isHolding = false;
-	private Color startingColor;
-
-	void Start()
+namespace CubesAndStuff
+{
+	public class ThrowSphere : MonoBehaviour
 	{
-		startingColor = renderer.material.color;
-		rigidbody.isKinematic = true;
-	}
-	
-	void OnMouseDown()
-	{
-		isHolding = true;
-		rigidbody.isKinematic = true;
-	}
-	
-	void OnMouseDrag()
-	{
-		float sphereDistance = Mathf.Abs(Camera.main.transform.position.z - transform.position.z);
-		Vector3 mousePos = Input.mousePosition;
-		mousePos.z = sphereDistance;
-		Vector3 newPos = Camera.main.ScreenToWorldPoint(mousePos);
-		newPos.z = transform.position.z;
-		transform.position = newPos;
-		StartCoroutine(AnimateColor());
-	}
-
-	void OnMouseUp()
-	{
-		isHolding = false;
-		rigidbody.isKinematic = false;
-		rigidbody.AddForce(Vector3.forward * throwingPower, ForceMode.Impulse);
-	}
-	
-	IEnumerator AnimateColor()
-	{
-		Color original = renderer.material.color;
-		bool fadingToWhite = true;
-		float time = 0f;
+		public float throwingPower = 5f;
 		
-		while(isHolding) {
-			time = Mathf.Clamp01(time + Time.deltaTime);
+		private bool isHolding = false;
+		private Color startingColor;
+		private Plane dragPlane;
 
-			if(fadingToWhite) {
-				renderer.material.color = Color.Lerp(original, Color.white, time);
-				if(time == 1f) {
-					fadingToWhite = false;
-					time = 0f;
+		#region Cached Component Properties
+
+		private Transform mCachedTransform;
+		private Transform cachedTransform
+		{
+			get
+			{
+				if(mCachedTransform == null) {
+					mCachedTransform = GetComponent<Transform>();
 				}
-			} else {
-				renderer.material.color = Color.Lerp(Color.white, original, time);
-				if(time == 1f) {
-					fadingToWhite = true;
-					time = 0f;
-				}
+				return mCachedTransform;
 			}
-			yield return null;
 		}
-		renderer.material.color = original;
-	}
-	
-//	void Update()
-//	{
-//		if(Input.GetMouseButtonDown(0)) {
-//			Ray mouseRay = Camera.main.ScreenPointToRay(Input.mousePosition);
-//			RaycastHit hit;
-//			if(Physics.Raycast(mouseRay, out hit)) {
-//				if(hit.rigidbody == rigidbody) {
-//					isHolding = true;
-//					return;
-//				}
-//			}
-//		}
-//		
-//		if(Input.GetMouseButton(0) && isHolding) {
-//			float sphereDistance = Vector3.Distance(Camera.main.transform.position, transform.position);
-//			Vector3 mousePos = Input.mousePosition;
-//			mousePos.z = sphereDistance;
-//			Vector3 newPos = Camera.main.ScreenToWorldPoint(mousePos);
-//			newPos.z = transform.position.z;
-//			transform.position = newPos;
-//			return;
-//		}
+
+		private Camera mCachedMainCamera;
+		private Camera cachedMainCamera
+		{
+			get
+			{
+				if(mCachedMainCamera == null) {
+					mCachedMainCamera = Camera.main;
+				}
+				return mCachedMainCamera;
+			}
+		}
+
+		private Rigidbody mCachedRigidbody;
+		private Rigidbody cachedRigidbody
+		{
+			get
+			{
+				if(mCachedRigidbody == null) {
+					mCachedRigidbody = GetComponent<Rigidbody>();
+				}
+				return mCachedRigidbody;
+			}
+		}
+
+		private Renderer mCachedRenderer;
+		private Renderer cachedRenderer
+		{
+			get
+			{
+				if(mCachedRenderer == null) {
+					mCachedRenderer = GetComponent<Renderer>();
+				}
+				return mCachedRenderer;
+			}
+		}
 		
-//		if(Input.GetMouseButtonUp(0) && isHolding) {
-//			isHolding = false;
-//			rigidbody.isKinematic = false;
-//			rigidbody.AddForce(Vector3.forward * throwingPower, ForceMode.Impulse);
-//		}
-//	}
-	
-	void OnCollisionEnter(Collision collision)
-	{
-		if(collision.collider.gameObject.name.Equals("Cube")) {
-			renderer.material.color = Color.green;
+		#endregion
+		
+		void Start()
+		{
+			startingColor = cachedRenderer.material.color;
+			cachedRigidbody.isKinematic = true;
 		}
-	}
-	
-	void OnReset()
-	{
-		rigidbody.isKinematic = true;
-		renderer.material.color = startingColor;
+
+		void OnMouseDown()
+		{
+			isHolding = true;
+			cachedRigidbody.isKinematic = true;
+			dragPlane = new Plane(Vector3.back, cachedTransform.position);
+		}
+		
+		void OnMouseDrag()
+		{
+			Vector3 mousePos = Input.mousePosition;
+			Ray touchRay = cachedMainCamera.ScreenPointToRay(mousePos);
+			float distance = 0f;
+			if(dragPlane.Raycast(touchRay, out distance)) {
+				Vector3 nextPos = touchRay.GetPoint(distance);
+				cachedTransform.position = nextPos;
+			}
+			StartCoroutine(AnimateColor());
+		}
+
+		void OnMouseUp()
+		{
+			isHolding = false;
+			cachedRigidbody.isKinematic = false;
+			cachedRigidbody.AddForce(Vector3.forward * throwingPower, ForceMode.Impulse);
+		}
+		
+		IEnumerator AnimateColor()
+		{
+			Color original = cachedRenderer.material.color;
+			bool fadingToWhite = true;
+			float time = 0f;
+			
+			while(isHolding) {
+				time = Mathf.Clamp01(time + Time.deltaTime);
+
+				if(fadingToWhite) {
+					cachedRenderer.material.color = Color.Lerp(original, Color.white, time);
+					if(time == 1f) {
+						fadingToWhite = false;
+						time = 0f;
+					}
+				} else {
+					cachedRenderer.material.color = Color.Lerp(Color.white, original, time);
+					if(time == 1f) {
+						fadingToWhite = true;
+						time = 0f;
+					}
+				}
+				yield return null;
+			}
+			cachedRenderer.material.color = original;
+		}
+		
+		void OnCollisionEnter(Collision collision)
+		{
+			if(collision.collider.gameObject.name.Equals("Cube")) {
+				cachedRenderer.material.color = Color.green;
+			}
+		}
+		
+		void OnGameReset()
+		{
+			cachedRigidbody.isKinematic = true;
+			cachedRenderer.material.color = startingColor;
+		}
 	}
 }

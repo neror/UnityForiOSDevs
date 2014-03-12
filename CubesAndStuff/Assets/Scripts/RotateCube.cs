@@ -1,15 +1,9 @@
 using UnityEngine;
 using System.Collections;
 
-public class RotateCube : MonoBehaviour
+namespace CubesAndStuff
 {
-	void Start()
+	public class RotateCube : MonoBehaviour
 	{
-	
-	}
-	
-	void Update()
-	{
-	
 	}
 }
