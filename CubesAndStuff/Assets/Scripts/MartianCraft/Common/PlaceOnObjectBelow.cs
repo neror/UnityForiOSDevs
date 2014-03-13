@@ -10,13 +10,10 @@ namespace MartianCraft.Common
 		public LayerMask surfaceLayers = 1;  // LayerMask == 1 is the "Default" layer
 		public bool resetOnEnable = false;
 		private bool initialized = false;
-		private bool wasKinematic;
 
 		void OnEnable()
 		{
 			if(!resetOnEnable) {
-				wasKinematic = cachedRigidbody.isKinematic;
-				cachedRigidbody.isKinematic = true;
 				initialized = false;
 			}
 		}
@@ -26,7 +23,6 @@ namespace MartianCraft.Common
 			if(!initialized) {
 				Initialize();
 				initialized = true;
-				cachedRigidbody.isKinematic = wasKinematic;
 			}
 		}
 
