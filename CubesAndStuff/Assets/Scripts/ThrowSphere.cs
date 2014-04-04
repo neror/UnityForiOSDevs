@@ -62,7 +62,9 @@ namespace CubesAndStuff
 		}
 		
 		#endregion
-		
+
+		#region MonoBehaviour Overrides
+
 		void Start()
 		{
 			startingColor = cachedRenderer.material.color;
@@ -74,6 +76,7 @@ namespace CubesAndStuff
 			isHolding = true;
 			cachedRigidbody.isKinematic = true;
 			dragPlane = new Plane(Vector3.back, cachedTransform.position);
+			StartCoroutine(AnimateColor());
 		}
 		
 		void OnMouseDrag()
@@ -85,7 +88,6 @@ namespace CubesAndStuff
 				Vector3 nextPos = touchRay.GetPoint(distance);
 				cachedTransform.position = nextPos;
 			}
-			StartCoroutine(AnimateColor());
 		}
 
 		void OnMouseUp()
@@ -94,7 +96,16 @@ namespace CubesAndStuff
 			cachedRigidbody.isKinematic = false;
 			cachedRigidbody.AddForce(Vector3.forward * throwingPower, ForceMode.Impulse);
 		}
-		
+
+		void OnCollisionEnter(Collision collision)
+		{
+			if(collision.collider.gameObject.name.Equals("Cube")) {
+				cachedRenderer.material.color = Color.green;
+			}
+		}
+
+		#endregion
+
 		IEnumerator AnimateColor()
 		{
 			Color original = cachedRenderer.material.color;
@@ -121,14 +132,7 @@ namespace CubesAndStuff
 			}
 			cachedRenderer.material.color = original;
 		}
-		
-		void OnCollisionEnter(Collision collision)
-		{
-			if(collision.collider.gameObject.name.Equals("Cube")) {
-				cachedRenderer.material.color = Color.green;
-			}
-		}
-		
+
 		void OnGameReset()
 		{
 			cachedRigidbody.isKinematic = true;
